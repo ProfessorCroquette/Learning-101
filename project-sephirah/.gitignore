@@ -1,0 +1,27 @@
+﻿# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# Database
+*.db
+*.sqlite
+*.db-journal
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temp
+*.tmp
+*.temp
