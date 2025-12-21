@@ -14,9 +14,9 @@ import java.util.List;
 import java.util.ArrayList;
 
 /**
- * 🟢 [CLASS] Main facade for Umapyoi.net API interactions
- * 🎯 PURPOSE: Single entry point for all API calls, handles HTTP communication
- * 📚 DEMONSTRATES: Facade pattern, API integration, error handling, async operations
+ * [CLASS] Main facade for Umapyoi.net API interactions
+ * PURPOSE: Single entry point for all API calls, handles HTTP communication
+ * DEMONSTRATES: Facade pattern, API integration, error handling, async operations
  */
 public class UmapyoiApiClient {
     private static final Logger logger = LoggerFactory.getLogger(UmapyoiApiClient.class);
@@ -36,9 +36,9 @@ public class UmapyoiApiClient {
     }
     
     /**
-     * 🔓 PUBLIC API: Get all character IDs
-     * 📍 Endpoint: GET /api/v1/character
-     * ⏱️ Complexity: O(1) cache hit, O(n) network call
+     * PUBLIC API: Get all character IDs
+     * Endpoint: GET /api/v1/character
+     * ⏱ Complexity: O(1) cache hit, O(n) network call
      */
     public List<Integer> getAllCharacterIds() throws IOException {
         final String cacheKey = "character_ids";
@@ -74,9 +74,9 @@ public class UmapyoiApiClient {
     }
     
     /**
-     * 🔓 PUBLIC API: Get character by ID
-     * 📍 Endpoint: GET /api/v1/character/{id}
-     * 📦 Returns: Raw JSON response as UmapyoiCharacter model
+     * PUBLIC API: Get character by ID
+     * Endpoint: GET /api/v1/character/{id}
+     * Returns: Raw JSON response as UmapyoiCharacter model
      */
     public UmapyoiCharacter getCharacterById(int characterId) throws IOException {
         final String cacheKey = "character_" + characterId;
@@ -111,8 +111,8 @@ public class UmapyoiApiClient {
     }
     
     /**
-     * 🔓 PUBLIC API: Get character and convert to your domain model
-     * 📍 Demonstrates: API-to-domain model transformation
+     *  PUBLIC API: Get character and convert to your domain model
+     * Demonstrates: API-to-domain model transformation
      */
     public Umamusume getCharacterAsUmamusume(int characterId) throws IOException {
         UmapyoiCharacter apiCharacter = getCharacterById(characterId);
@@ -120,8 +120,8 @@ public class UmapyoiApiClient {
     }
     
     /**
-     * 🔓 PUBLIC API: Get multiple characters
-     * 📍 Demonstrates: Batch processing
+     * PUBLIC API: Get multiple characters
+     * Demonstrates: Batch processing
      */
     public List<Umamusume> getMultipleCharacters(List<Integer> characterIds) throws IOException {
         List<Umamusume> characters = new ArrayList<>();
@@ -147,8 +147,8 @@ public class UmapyoiApiClient {
     }
     
     /**
-     * 🔓 PUBLIC API: Health check
-     * 📍 Endpoint: HEAD /api/v1/character (lightweight check)
+     * PUBLIC API: Health check
+     *  Endpoint: HEAD /api/v1/character (lightweight check)
      */
     public boolean isApiAvailable() {
         HttpUrl url = HttpUrl.parse(config.getBaseUrl() + "/api/v1/character");
@@ -165,7 +165,7 @@ public class UmapyoiApiClient {
     }
     
     /**
-     * 🔓 PUBLIC API: Clear cache
+     * PUBLIC API: Clear cache
      */
     public void clearCache() {
         cache.clear();
@@ -181,7 +181,7 @@ public class UmapyoiApiClient {
     }
     
     /**
-     * 🔒 PRIVATE: Convert API model to domain model
+     * PRIVATE: Convert API model to domain model
      */
     private Umamusume convertToUmamusume(UmapyoiCharacter apiCharacter) {
         // Create your Umamusume object from API data
@@ -199,7 +199,7 @@ public class UmapyoiApiClient {
     }
     
     /**
-     * 🔓 UTILITY: Build complete URL for endpoint
+     * UTILITY: Build complete URL for endpoint
      */
     public String buildUrl(String endpoint) {
         return config.getBaseUrl() + endpoint;

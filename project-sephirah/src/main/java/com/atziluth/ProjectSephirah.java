@@ -28,7 +28,7 @@ public class ProjectSephirah {
     private void run() {
         initialize();
         
-        // ...existing code...
+        
         boolean running = true;
         while (running) {
             displayMainMenu();
@@ -61,7 +61,8 @@ public class ProjectSephirah {
                     System.out.println("Invalid choice.");
             }
         }
-// ...existing code...
+        shutdown();
+    }
     
     private void initialize() {
         System.out.println("🚀 Initializing Sephirah modules...\n");
@@ -101,24 +102,30 @@ public class ProjectSephirah {
     
     // ...existing code...
     private void showHelp() {
-        System.out.println(
-            "\n📖 PROJECT SEPHIRAH HELP\n\n" +
-            "This framework demonstrates CS concepts through 4 modules:\n\n" +
-            "1. CHESED - Object-Oriented Programming & Algorithms\n" +
-            "   • Umamusume character database\n" +
-            "   • Sorting algorithms (Bubble, Merge, Quick, etc.)\n" +
-            "   • Search algorithms (Linear, Binary, etc.)\n" +
-            "   • Track proficiency analysis\n\n" +
-            "2. GEVURAH - Algorithm Complexity\n" +
-            "   • RPG market simulation with 20k agents\n" +
-            "   • Time/Space complexity analysis\n\n" +
-            "3. TIFERET - Discrete Mathematics\n" +
-            "   • Boolean algebra for game requirements\n" +
-            "   • Logic gates and circuit design\n\n" +
-            "4. BINAH - System Architecture\n" +
-            "   • Library management system\n" +
-            "   • State machines and graph theory\n\n" +
-            "Press Enter to continue..."
+        System.out.println("""
+            📖 PROJECT SEPHIRAH HELP
+
+            This framework demonstrates CS concepts through 4 modules:
+
+            1. CHESED - Object-Oriented Programming & Algorithms
+               • Umamusume character database
+               • Sorting algorithms (Bubble, Merge, Quick, etc.)
+               • Search algorithms (Linear, Binary, etc.)
+               • Track proficiency analysis
+
+            2. GEVURAH - Algorithm Complexity
+               • RPG market simulation with 20k agents
+               • Time/Space complexity analysis
+
+            3. TIFERET - Discrete Mathematics
+               • Boolean algebra for game requirements
+               • Logic gates and circuit design
+
+            4. BINAH - System Architecture
+               • Library management system
+               • State machines and graph theory
+
+            Press Enter to continue..."""
         );
         scanner.nextLine();
     }
