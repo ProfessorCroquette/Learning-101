@@ -28,28 +28,40 @@ public class ProjectSephirah {
     private void run() {
         initialize();
         
+        // ...existing code...
         boolean running = true;
         while (running) {
             displayMainMenu();
             String choice = scanner.nextLine().trim();
-            
+
             switch (choice) {
-                case "1" -> runSephirah("chesed");
-                case "2" -> System.out.println("Gevurah module coming soon!");
-                case "3" -> System.out.println("Tiferet module coming soon!");
-                case "4" -> System.out.println("Binah module coming soon!");
-                case "0" -> {
+                case "1":
+                    runSephirah("chesed");
+                    break;
+                case "2":
+                    System.out.println("Gevurah module coming soon!");
+                    break;
+                case "3":
+                    System.out.println("Tiferet module coming soon!");
+                    break;
+                case "4":
+                    System.out.println("Binah module coming soon!");
+                    break;
+                case "0":
                     running = false;
                     System.out.println("Goodbye!");
-                }
-                case "?" -> showHelp();
-                case "!" -> showSystemInfo();
-                default -> System.out.println("Invalid choice.");
+                    break;
+                case "?":
+                    showHelp();
+                    break;
+                case "!":
+                    showSystemInfo();
+                    break;
+                default:
+                    System.out.println("Invalid choice.");
             }
         }
-        
-        shutdown();
-    }
+// ...existing code...
     
     private void initialize() {
         System.out.println("🚀 Initializing Sephirah modules...\n");
@@ -87,47 +99,40 @@ public class ProjectSephirah {
         }
     }
     
+    // ...existing code...
     private void showHelp() {
-        System.out.println("""
-            \n📖 PROJECT SEPHIRAH HELP
-            
-            This framework demonstrates CS concepts through 4 modules:
-            
-            1. CHESED - Object-Oriented Programming & Algorithms
-               • Umamusume character database
-               • Sorting algorithms (Bubble, Merge, Quick, etc.)
-               • Search algorithms (Linear, Binary, etc.)
-               • Track proficiency analysis
-            
-            2. GEVURAH - Algorithm Complexity
-               • RPG market simulation with 20k agents
-               • Time/Space complexity analysis
-            
-            3. TIFERET - Discrete Mathematics
-               • Boolean algebra for game requirements
-               • Logic gates and circuit design
-            
-            4.  BINAH - System Architecture
-               • Library management system
-               • State machines and graph theory
-            
-            Press Enter to continue...""");
+        System.out.println(
+            "\n📖 PROJECT SEPHIRAH HELP\n\n" +
+            "This framework demonstrates CS concepts through 4 modules:\n\n" +
+            "1. CHESED - Object-Oriented Programming & Algorithms\n" +
+            "   • Umamusume character database\n" +
+            "   • Sorting algorithms (Bubble, Merge, Quick, etc.)\n" +
+            "   • Search algorithms (Linear, Binary, etc.)\n" +
+            "   • Track proficiency analysis\n\n" +
+            "2. GEVURAH - Algorithm Complexity\n" +
+            "   • RPG market simulation with 20k agents\n" +
+            "   • Time/Space complexity analysis\n\n" +
+            "3. TIFERET - Discrete Mathematics\n" +
+            "   • Boolean algebra for game requirements\n" +
+            "   • Logic gates and circuit design\n\n" +
+            "4. BINAH - System Architecture\n" +
+            "   • Library management system\n" +
+            "   • State machines and graph theory\n\n" +
+            "Press Enter to continue..."
+        );
         scanner.nextLine();
     }
-    
+
     private void showSystemInfo() {
-        System.out.printf("""
-            \n⚙️  SYSTEM INFORMATION
-            
-            Java Version: %s
-            OS: %s
-            Available Processors: %d
-            Free Memory: %d MB
-            
-            Project Location: I:\\REPO\\Learning-101\\project-sephirah
-            GitHub: https://github.com/ProfessorCroquette/Learning-101
-            
-            Press Enter to continue...""",
+        System.out.printf(
+            "\n⚙️  SYSTEM INFORMATION%n%n" +
+            "Java Version: %s%n" +
+            "OS: %s%n" +
+            "Available Processors: %d%n" +
+            "Free Memory: %d MB%n%n" +
+            "Project Location: I:\\REPO\\Learning-101\\project-sephirah%n" +
+            "GitHub: https://github.com/ProfessorCroquette/Learning-101%n%n" +
+            "Press Enter to continue...",
             System.getProperty("java.version"),
             System.getProperty("os.name"),
             Runtime.getRuntime().availableProcessors(),
@@ -135,6 +140,7 @@ public class ProjectSephirah {
         );
         scanner.nextLine();
     }
+
     
     private void shutdown() {
         System.out.println("\n🛑 Shutting down...");
