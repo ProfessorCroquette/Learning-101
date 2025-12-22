@@ -100,7 +100,6 @@ public class ProjectSephirah {
         }
     }
     
-    // ...existing code...
     private void showHelp() {
         System.out.println("""
             📖 PROJECT SEPHIRAH HELP
