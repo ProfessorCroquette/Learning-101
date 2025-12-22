@@ -2,6 +2,13 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "type": "java",
+      "name": "ProjectSephirah",
+      "request": "launch",
+      "mainClass": "com.atziluth.ProjectSephirah",
+      "projectName": "project-sephirah"
+    },
+    {
       "name": "C/C++ Runner: Debug Session",
       "type": "cppdbg",
       "request": "launch",

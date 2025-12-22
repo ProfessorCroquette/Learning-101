@@ -6,24 +6,24 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 🟢 [CLASS] Configuration manager for API connections
- * 🎯 PURPOSE: Centralizes all API settings, HTTP client configuration, and JSON mapping
- * 📚 DEMONSTRATES: Singleton pattern, configuration management, dependency setup
+ * [CLASS] Configuration manager for API connections
+ * PURPOSE: Centralizes all API settings, HTTP client configuration, and JSON mapping
+ * DEMONSTRATES: Singleton pattern, configuration management, dependency setup
  */
 public class ApiConfig {
     
-    // 🔒 ENCAPSULATED CONFIGURATION (private constants)
+   
     private static final String BASE_URL = "https://umapyoi.net";
     private static final int CONNECT_TIMEOUT = 30; // seconds
     private static final int READ_TIMEOUT = 30;    // seconds
     private static final int WRITE_TIMEOUT = 30;   // seconds
     
-    // 🔒 PRIVATE INSTANCE VARIABLES
+   
     private final OkHttpClient httpClient;
     private final ObjectMapper objectMapper;
     private final String apiKey; // For future authenticated endpoints
     
-    // 🏗️ CONSTRUCTOR (package-private for controlled instantiation)
+   
     ApiConfig(String apiKey) {
         this.apiKey = apiKey;
         
