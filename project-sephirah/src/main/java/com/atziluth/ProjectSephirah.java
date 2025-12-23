@@ -11,6 +11,7 @@ public class ProjectSephirah {
     
     private final Map<String, Sephirah> sephirot = new LinkedHashMap<>();
     private final Scanner scanner = new Scanner(System.in);
+    private ChesedSephirah chesedModule;
     
     public static void main(String[] args) {
         System.out.println("""
@@ -28,28 +29,37 @@ public class ProjectSephirah {
     private void run() {
         initialize();
         
-        
         boolean running = true;
         while (running) {
             displayMainMenu();
-            String choice = scanner.nextLine().trim();
+            String choice = "";
+            try {
+                if (scanner.hasNextLine()) {
+                    choice = scanner.nextLine().trim();
+                } else {
+                    choice = "0"; // Exit if no input available
+                }
+            } catch (Exception e) {
+                System.out.println("Input error: " + e.getMessage());
+                choice = "0";
+            }
 
             switch (choice) {
                 case "1":
                     runSephirah("chesed");
                     break;
                 case "2":
-                    System.out.println("Gevurah module coming soon!");
+                    System.out.println("🔮 Gevurah module coming soon!");
                     break;
                 case "3":
-                    System.out.println("Tiferet module coming soon!");
+                    System.out.println("🔮 Tiferet module coming soon!");
                     break;
                 case "4":
-                    System.out.println("Binah module coming soon!");
+                    System.out.println("🔮 Binah module coming soon!");
                     break;
                 case "0":
                     running = false;
-                    System.out.println("Goodbye!");
+                    System.out.println("\n👋 Goodbye!");
                     break;
                 case "?":
                     showHelp();
@@ -58,7 +68,9 @@ public class ProjectSephirah {
                     showSystemInfo();
                     break;
                 default:
-                    System.out.println("Invalid choice.");
+                    if (!choice.isEmpty()) {
+                        System.out.println("❌ Invalid choice. Please enter 0-4, ?, or !");
+                    }
             }
         }
         shutdown();
@@ -68,8 +80,9 @@ public class ProjectSephirah {
         System.out.println("🚀 Initializing Sephirah modules...\n");
         
         // Register Chesed module
-        ChesedSephirah chesed = new ChesedSephirah();
-        sephirot.put("chesed", chesed);
+        chesedModule = new ChesedSephirah();
+        chesedModule.initialize();
+        sephirot.put("chesed", chesedModule);
         
         System.out.println("✅ Chesed module ready: Umamusume Database System");
         System.out.println("📊 Total modules: " + sephirot.size());
@@ -79,24 +92,34 @@ public class ProjectSephirah {
         System.out.println("\n" + "═".repeat(60));
         System.out.println("📚 PROJECT SEPHIRAH - MAIN MENU");
         System.out.println("═".repeat(60));
-        
-        System.out.println("1. 🐎 CHESED   - Umamusume Database & Algorithms");
-        System.out.println("2. ⚔️  GEVURAH  - RPG Market Simulation (Coming Soon)");
-        System.out.println("3. 🧮 TIFERET  - Boolean Logic System (Coming Soon)");
-        System.out.println("4. 🎭 BINAH    - Library Architecture (Coming Soon)");
-        System.out.println("0. 🚪 EXIT");
-        System.out.println("\n? - Help   ! - System Info");
+        System.out.println();
+        System.out.println("  1️⃣  CHESED   - Umamusume Database & Algorithms");
+        System.out.println("  2️⃣  GEVURAH  - RPG Market Simulation (Coming Soon)");
+        System.out.println("  3️⃣  TIFERET  - Boolean Logic System (Coming Soon)");
+        System.out.println("  4️⃣  BINAH    - Library Architecture (Coming Soon)");
+        System.out.println();
+        System.out.println("  0️⃣  EXIT");
+        System.out.println();
+        System.out.println("  ❓ HELP   🔧 SYSTEM INFO");
         System.out.println("─".repeat(60));
-        System.out.print("Enter choice: ");
+        System.out.print("📌 Enter choice (1/2/3/4/0): ");
+        System.out.flush();
     }
     
     private void runSephirah(String name) {
-        Sephirah sephirah = sephirot.get(name);
-        if (sephirah != null) {
+        if ("chesed".equalsIgnoreCase(name)) {
             System.out.println("\n" + "✨".repeat(30));
-            System.out.println("   LAUNCHING: " + sephirah.getName().toUpperCase());
+            System.out.println("   ENTERING CHESED MODULE");
             System.out.println("✨".repeat(30));
-            sephirah.demonstrate();
+            chesedModule.showChesedMenu();
+        } else {
+            Sephirah sephirah = sephirot.get(name);
+            if (sephirah != null) {
+                System.out.println("\n" + "✨".repeat(30));
+                System.out.println("   LAUNCHING: " + sephirah.getName().toUpperCase());
+                System.out.println("✨".repeat(30));
+                sephirah.demonstrate();
+            }
         }
     }
     
@@ -155,4 +178,4 @@ public class ProjectSephirah {
         }
         scanner.close();
     }
-}// test
+}

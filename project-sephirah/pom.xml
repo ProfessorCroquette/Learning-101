@@ -61,13 +61,6 @@
             <version>5.10.0</version>
             <scope>test</scope>
         </dependency>
-        
-        <!-- 5️⃣ Java 8 Time Support -->
-        <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-jsr310</artifactId>
-            <version>2.16.1</version>
-        </dependency>
     </dependencies>
     
     <build>
@@ -84,6 +77,24 @@
         <release>17</release>
     </configuration>
 </plugin>
+            <!-- Exec Maven Plugin -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>run-app</id>
+                        <phase>none</phase>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                        <configuration>
+                            <mainClass>com.atziluth.ProjectSephirah</mainClass>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <!-- Executable JAR -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -92,10 +103,32 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>com.atziluth.sephirah.chesed.api.ApiDemo</mainClass>
+                            <mainClass>com.atziluth.ProjectSephirah</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
+            </plugin>
+            <!-- Shade Plugin to create fat JAR with all dependencies -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>com.atziluth.ProjectSephirah</mainClass>
+                                </transformer>
+                            </transformers>
+                            <finalName>${project.artifactId}-${project.version}-all</finalName>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
