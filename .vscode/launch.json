@@ -3,6 +3,13 @@
   "configurations": [
     {
       "type": "java",
+      "name": "ApiDataProcessingDemo",
+      "request": "launch",
+      "mainClass": "com.atziluth.sephirah.chesed.demo.ApiDataProcessingDemo",
+      "projectName": "project-sephirah"
+    },
+    {
+      "type": "java",
       "name": "ProjectSephirah",
       "request": "launch",
       "mainClass": "com.atziluth.ProjectSephirah",
