@@ -75,7 +75,7 @@ public class ApiConfig {
     
         // 🔓 VALIDATION METHOD
     public void validate() {
-        if (BASE_URL == null || BASE_URL.trim().isEmpty()) {
+        if (BASE_URL.trim().isEmpty()) {
             throw new IllegalStateException("Base URL is not configured");
         }
     }

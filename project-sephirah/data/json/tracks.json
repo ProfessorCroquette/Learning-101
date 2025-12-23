@@ -1,0 +1,42 @@
+[
+  {
+    "id": 1,
+    "name": "Joke Track",
+    "distance": 1800,
+    "surface": "TURF",
+    "region": "Beacon Hill",
+    "difficulty": "EASY"
+  },
+  {
+    "id": 2,
+    "name": "Kentucky Derby",
+    "distance": 2000,
+    "surface": "DIRT",
+    "region": "Churchill Downs",
+    "difficulty": "HARD"
+  },
+  {
+    "id": 3,
+    "name": "Preakness Stakes",
+    "distance": 1900,
+    "surface": "DIRT",
+    "region": "Pimlico",
+    "difficulty": "HARD"
+  },
+  {
+    "id": 4,
+    "name": "Japan Cup",
+    "distance": 2400,
+    "surface": "TURF",
+    "region": "Tokyo Racecourse",
+    "difficulty": "VERY_HARD"
+  },
+  {
+    "id": 5,
+    "name": "Arima Kinen",
+    "distance": 2500,
+    "surface": "TURF",
+    "region": "Nakayama Racecourse",
+    "difficulty": "VERY_HARD"
+  }
+]

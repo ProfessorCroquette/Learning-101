@@ -78,8 +78,10 @@ public class LocalCache {
         CacheEntry entry = new CacheEntry(data, ttlMillis, type);
         cache.put(key, entry);
         
-        logger.debug("Cached: {} (TTL: {}ms, Type: {})", 
-            key, ttlMillis, getSimpleTypeName(type));
+        if (logger.isDebugEnabled()) {
+            logger.debug("Cached: {} (TTL: {}ms, Type: {})", 
+                key, ttlMillis, getSimpleTypeName(type));
+        }
     }
     
     /**

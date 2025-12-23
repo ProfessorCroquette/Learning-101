@@ -231,8 +231,8 @@ public class UmamusumeSorter {
         }
     }
     
-    // Hide implicit public constructor for utility class
-    private UmamusumeSorter() {
-        throw new UnsupportedOperationException("Utility class");
+    // Private constructor for utility class
+    public UmamusumeSorter() {
+        // Utility class with static methods
     }
 }

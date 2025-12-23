@@ -1,0 +1,41 @@
+{
+  "learning_path": {
+    "chesed": {
+      "order": 1,
+      "title": "OOP & Algorithms",
+      "duration_weeks": 4,
+      "modules": [
+        {
+          "id": "oop_concepts",
+          "title": "Object-Oriented Programming",
+          "topics": [
+            "Encapsulation",
+            "Inheritance",
+            "Polymorphism",
+            "Abstraction"
+          ]
+        },
+        {
+          "id": "design_patterns",
+          "title": "Design Patterns",
+          "topics": [
+            "Factory Pattern",
+            "Singleton Pattern",
+            "Facade Pattern",
+            "Strategy Pattern"
+          ]
+        },
+        {
+          "id": "algorithms",
+          "title": "Algorithms & Data Structures",
+          "topics": [
+            "Sorting Algorithms",
+            "Searching Algorithms",
+            "Caching Strategies",
+            "Rate Limiting"
+          ]
+        }
+      ]
+    }
+  }
+}

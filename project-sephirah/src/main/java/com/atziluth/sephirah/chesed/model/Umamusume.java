@@ -34,11 +34,20 @@ public class Umamusume {
     }
     
     // Getters and setters
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
+    
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
     
+    public String getJapaneseName() { return japaneseName; }
+    public void setJapaneseName(String japaneseName) { this.japaneseName = japaneseName; }
+    
     public Rarity getRarity() { return rarity; }
     public void setRarity(Rarity rarity) { this.rarity = rarity; }
+    
+    public CharacterType getType() { return type; }
+    public void setType(CharacterType type) { this.type = type; }
     
     public Stats getStats() { return stats; }
     public void setStats(Stats stats) { this.stats = stats; }
@@ -52,7 +61,7 @@ public class Umamusume {
     }
     
     // Get proficiency score for specific track
-    public int getProficiencyScore(TrackType trackType, DistanceType distanceType) {
+    public int getProficiencyScore(TrackProficiency.TrackType trackType, TrackProficiency.DistanceType distanceType) {
         return proficiencies.stream()
             .filter(p -> p.getTrackType() == trackType && p.getDistanceType() == distanceType)
             .findFirst()

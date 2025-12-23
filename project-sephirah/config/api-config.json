@@ -1,0 +1,24 @@
+{
+  "api": {
+    "base_url": "https://api.umapyoi.net",
+    "timeout_ms": 10000,
+    "max_retries": 3,
+    "rate_limit_delay_ms": 100
+  },
+  "cache": {
+    "ttl_seconds": 3600,
+    "max_entries": 10000,
+    "enable_statistics": true
+  },
+  "logging": {
+    "level": "INFO",
+    "format": "json",
+    "file_path": "logs/application.log"
+  },
+  "database": {
+    "driver": "com.mysql.cj.jdbc.Driver",
+    "url": "jdbc:mysql://localhost:3306/umamusume",
+    "username": "root",
+    "password": "${DB_PASSWORD}"
+  }
+}

@@ -1,0 +1,91 @@
+[
+  {
+    "id": 1,
+    "name": "Special Week",
+    "japaneseName": "スペシャルウィーク",
+    "characterType": "SPEED",
+    "rarity": "UR",
+    "stats": {
+      "speed": 1200,
+      "stamina": 800,
+      "power": 600,
+      "guts": 700,
+      "intelligence": 900
+    },
+    "skills": [
+      "Intuitive Sense",
+      "Speed Star"
+    ]
+  },
+  {
+    "id": 2,
+    "name": "Silence Suzuka",
+    "japaneseName": "サイレンススズカ",
+    "characterType": "SPEED",
+    "rarity": "UR",
+    "stats": {
+      "speed": 1300,
+      "stamina": 700,
+      "power": 500,
+      "guts": 800,
+      "intelligence": 800
+    },
+    "skills": [
+      "Rear Attack",
+      "Escape"
+    ]
+  },
+  {
+    "id": 3,
+    "name": "Sakura Bakushin O",
+    "japaneseName": "サクラバクシンオー",
+    "characterType": "SPEED",
+    "rarity": "SR",
+    "stats": {
+      "speed": 1100,
+      "stamina": 600,
+      "power": 700,
+      "guts": 600,
+      "intelligence": 800
+    },
+    "skills": [
+      "High Speed"
+    ]
+  },
+  {
+    "id": 4,
+    "name": "Tokai Teio",
+    "japaneseName": "トウカイテイオー",
+    "characterType": "STAMINA",
+    "rarity": "SSR",
+    "stats": {
+      "speed": 900,
+      "stamina": 1300,
+      "power": 800,
+      "guts": 900,
+      "intelligence": 700
+    },
+    "skills": [
+      "Stamina Self Increase",
+      "Tenacity"
+    ]
+  },
+  {
+    "id": 5,
+    "name": "Mejiro Mcqueen",
+    "japaneseName": "メジロマックイーン",
+    "characterType": "STAMINA",
+    "rarity": "SR",
+    "stats": {
+      "speed": 850,
+      "stamina": 1200,
+      "power": 900,
+      "guts": 800,
+      "intelligence": 600
+    },
+    "skills": [
+      "Powerful Build",
+      "Perseverance"
+    ]
+  }
+]
