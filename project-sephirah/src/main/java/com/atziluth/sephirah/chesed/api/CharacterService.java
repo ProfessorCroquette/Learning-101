@@ -5,7 +5,6 @@ import com.atziluth.sephirah.chesed.model.CharacterImages;
 import com.atziluth.sephirah.chesed.model.CharacterBirthday;
 import com.atziluth.sephirah.chesed.model.Umamusume;
 import com.fasterxml.jackson.core.type.TypeReference;
-import okhttp3.HttpUrl;
 import okhttp3.Request;
 import okhttp3.Response;
 import org.slf4j.Logger;
@@ -43,6 +42,7 @@ public class CharacterService {
     /**
      * 🔓 Get detailed character information by ID
      * Endpoint: GET /api/v1/character/{id}
+     * Falls back to wiki scraping if API data is incomplete
      */
     public UmapyoiCharacter getCharacterById(int characterId) throws IOException {
         String cacheKey = "character_" + characterId;
@@ -72,6 +72,9 @@ public class CharacterService {
             UmapyoiCharacter character = config.getObjectMapper()
                 .readValue(json, UmapyoiCharacter.class);
             
+            // Enrich with wiki data if API is incomplete
+            enrichCharacterWithWikiData(character);
+            
             // Cache the result
             cache.put(cacheKey, character, TimeUnit.HOURS.toMillis(24));
             logger.debug("Successfully fetched and cached character: {}", character.getNameEnglish());
@@ -85,7 +88,7 @@ public class CharacterService {
      */
     public Umamusume getCharacterAsUmamusume(int characterId) throws IOException {
         UmapyoiCharacter apiCharacter = getCharacterById(characterId);
-        return apiCharacter.toDomainModel();
+        return UmamusumeWikiScraper.enrichCharacterData(apiCharacter);
     }
     
     /**
@@ -118,7 +121,7 @@ public class CharacterService {
     
     /**
      * 🔓 Search characters by name (fuzzy search)
-     * Searches IDs 1001-1400 for matching names
+     * Searches IDs 1001-1400 for matching names. Stops immediately on exact match for performance.
      */
     public List<UmapyoiCharacter> searchCharactersByName(String name) throws IOException {
         if (name == null || name.trim().isEmpty()) {
@@ -126,19 +129,46 @@ public class CharacterService {
         }
         
         String searchTerm = name.trim().toLowerCase();
-        logger.info("Searching for characters with name containing: '{}'", searchTerm);
+        logger.info("Searching for characters with name: '{}'", searchTerm);
         
         List<UmapyoiCharacter> results = new ArrayList<>();
+        UmapyoiCharacter exactMatch = null;
         
-        // Search through a range of character IDs (1001-1400)
+        // First pass: look for exact match (stops immediately when found)
         for (int characterId = 1001; characterId <= 1400; characterId++) {
             try {
                 UmapyoiCharacter character = getCharacterById(characterId);
                 
-                // Check if character matches search term
+                // Check for exact name match first
+                if ((character.getNameEnglish() != null && character.getNameEnglish().toLowerCase().equals(searchTerm)) ||
+                    (character.getNameJapanese() != null && character.getNameJapanese().toLowerCase().equals(searchTerm))) {
+                    exactMatch = character;
+                    logger.info("Found exact match: {} (ID: {})", character.getNameEnglish(), characterId);
+                    return Arrays.asList(character); // Return immediately on exact match
+                }
+                
+                // Rate limiting
+                Thread.sleep(REQUEST_DELAY_MS);
+                
+            } catch (IOException e) {
+                // Character might not exist, skip
+                logger.trace("Character ID {} not found or error: {}", characterId, e.getMessage());
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IOException("Search interrupted", e);
+            }
+        }
+        
+        // Second pass: if no exact match, search for partial matches
+        logger.info("No exact match found. Searching for partial matches...");
+        for (int characterId = 1001; characterId <= 1400; characterId++) {
+            try {
+                UmapyoiCharacter character = getCharacterById(characterId);
+                
+                // Check if character matches search term (partial match)
                 if (character.matchesSearch(searchTerm)) {
                     results.add(character);
-                    logger.debug("Found match: {} (ID: {})", 
+                    logger.debug("Found partial match: {} (ID: {})", 
                                character.getNameEnglish(), characterId);
                 }
                 
@@ -159,7 +189,7 @@ public class CharacterService {
             }
         }
         
-        logger.info("Search completed. Found {} matches for '{}'", 
+        logger.info("Search completed. Found {} partial matches for '{}'", 
                    results.size(), searchTerm);
         return results;
     }
@@ -445,6 +475,46 @@ public class CharacterService {
         } catch (IOException e) {
             logger.warn("Connection test failed: {}", e.getMessage());
             return false;
+        }
+    }
+    
+    /**
+     * 🌐 Enrich character data with wiki scraping if API response is incomplete
+     * Used as fallback when API doesn't provide skills, stats, or track type
+     * Now returns enriched Umamusume domain model
+     */
+    private void enrichCharacterWithWikiData(UmapyoiCharacter character) {
+        if (character == null || character.getNameEnglish() == null) {
+            return;
+        }
+        
+        try {
+            logger.debug("Attempting to enrich character {} with wiki data", character.getNameEnglish());
+            
+            // Use new scraper that returns Umamusume model
+            Umamusume enrichedModel = UmamusumeWikiScraper.enrichCharacterData(character);
+            
+            if (enrichedModel == null || enrichedModel.getName() == null) {
+                logger.debug("No additional wiki data found for {}", character.getNameEnglish());
+                return;
+            }
+            
+            // Log enrichment details
+            Umamusume.Stats stats = enrichedModel.getStats();
+            if (stats != null && stats.getTotal() > 0) {
+                logger.debug("Wiki enrichment successful for {} - Total Stats: {}", 
+                    character.getNameEnglish(), stats.getTotal());
+            }
+            if (enrichedModel.getRarity() != null) {
+                logger.debug("Wiki enrichment - Rarity: {}", enrichedModel.getRarity());
+            }
+            if (enrichedModel.getType() != null) {
+                logger.debug("Wiki enrichment - Type: {}", enrichedModel.getType());
+            }
+            
+        } catch (Exception e) {
+            logger.debug("Wiki enrichment failed for {}: {}", character.getNameEnglish(), e.getMessage());
+            // Continue with API data only, don't fail the entire fetch
         }
     }
 }

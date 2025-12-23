@@ -5,11 +5,11 @@ import com.atziluth.core.ConsoleUI;
 import com.atziluth.sephirah.chesed.api.*;
 import com.atziluth.sephirah.chesed.model.*;
 import com.atziluth.sephirah.chesed.sorting.*;
-import com.atziluth.sephirah.chesed.searching.*;
 import com.atziluth.sephirah.chesed.factory.UmaFactory;
 import com.atziluth.sephirah.chesed.demo.*;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Complete Chesed module controller with all functionality
@@ -18,7 +18,6 @@ public class ChesedSephirah implements Sephirah {
     private ApiConfig apiConfig;
     private UmapyoiApiClient apiClient;
     private CharacterService characterService;
-    private SmartCharacterSearcher searcher;
     private UmamusumeSorter sorter;
     private UmapyoiCharacterManager characterManager;
     
@@ -47,9 +46,8 @@ public class ChesedSephirah implements Sephirah {
             apiConfig = ApiConfig.createDefault();
             apiClient = new UmapyoiApiClient(apiConfig);
             characterService = new CharacterService(apiConfig);
-            searcher = new SmartCharacterSearcher(apiClient);
             sorter = new UmamusumeSorter();
-            characterManager = new UmapyoiCharacterManager(apiClient, characterService);
+            characterManager = new UmapyoiCharacterManager(characterService);
             
             ConsoleUI.finishLoading();
             ConsoleUI.displaySuccess("Chesed module initialized successfully");
@@ -61,6 +59,13 @@ public class ChesedSephirah implements Sephirah {
             ConsoleUI.displayError("Failed to initialize Chesed module: " + e.getMessage());
             ConsoleUI.displayInfo("Running in offline mode with sample data");
         }
+    }
+    
+    @Override
+    public void shutdown() {
+        // Cleanup resources if needed
+        characterManager.clearCache();
+        ConsoleUI.displaySuccess("Chesed module shutdown complete");
     }
     
     @Override
@@ -148,6 +153,7 @@ public class ChesedSephirah implements Sephirah {
             
             String[] searchOptions = {
                 "Search by Name",
+                "Search by Popularity",
                 "Search by Rarity",
                 "Search by API ID",
                 "Search by Track Type",
@@ -158,28 +164,31 @@ public class ChesedSephirah implements Sephirah {
             
             ConsoleUI.displayMenu(searchOptions);
             
-            int choice = ConsoleUI.promptInt("Select search type (1-7)");
+            int choice = ConsoleUI.promptInt("Select search type (1-8)");
             
             switch (choice) {
                 case 1:
                     searchByName();
                     break;
                 case 2:
-                    searchByRarity();
+                    searchByPopularity();
                     break;
                 case 3:
-                    searchById();
+                    searchByRarity();
                     break;
                 case 4:
-                    searchByTrackType();
+                    searchById();
                     break;
                 case 5:
-                    advancedSearch();
+                    searchByTrackType();
                     break;
                 case 6:
-                    viewAllCharacters();
+                    advancedSearch();
                     break;
                 case 7:
+                    viewAllCharacters();
+                    break;
+                case 8:
                     searching = false;
                     break;
                 default:
@@ -203,27 +212,84 @@ public class ChesedSephirah implements Sephirah {
         }
         
         try {
-            ConsoleUI.displayLoading("Searching for '" + name + "'");
+            ConsoleUI.displayLoading("Searching for '" + name + "' across all characters...");
             
-            // Use your SmartCharacterSearcher
-            SearchResult result = searcher.searchByName(name);
+            // Use CharacterService's full search method (searches all 400+ characters)
+            List<UmapyoiCharacter> results = characterService.searchCharactersByName(name);
             
             ConsoleUI.finishLoading();
             
-            if (result.isSuccess() && !result.getResults().isEmpty()) {
-                displaySearchResults(result.getResults(), "Name Search Results");
-                
-                // Ask if user wants full info for a specific character
-                if (result.getResults().size() == 1) {
-                    displayFullCharacterInfo(result.getResults().get(0));
-                } else {
-                    promptForFullInfo(result.getResults());
+            if (!results.isEmpty()) {
+                displaySearchResults(results, "Name Search Results");
+
+                // If there's an exact single match to the input name (case-insensitive),
+                // fetch full data from the API to ensure up-to-date detailed info.
+                UmapyoiCharacter exactMatch = null;
+                for (UmapyoiCharacter c : results) {
+                    if (c.getNameEnglish() != null && c.getNameEnglish().equalsIgnoreCase(name)) {
+                        exactMatch = c;
+                        break;
+                    }
+                    if (c.getNameJapanese() != null && c.getNameJapanese().equalsIgnoreCase(name)) {
+                        exactMatch = c;
+                        break;
+                    }
+                }
+
+                try {
+                    if (exactMatch != null) {
+                        ConsoleUI.displayLoading("Fetching full data for exact match: " + exactMatch.getNameEnglish());
+                        UmapyoiCharacter full = characterService.getCharacterById(exactMatch.getGameId());
+                        ConsoleUI.finishLoading();
+                        if (full != null) {
+                            displayFullCharacterInfo(full);
+                        } else {
+                            displayFullCharacterInfo(exactMatch);
+                        }
+                    } else if (results.size() == 1) {
+                        // Single result but not exact match; still show full info for that entry
+                        UmapyoiCharacter single = results.get(0);
+                        ConsoleUI.displayLoading("Fetching full data for: " + single.getNameEnglish());
+                        UmapyoiCharacter full = characterService.getCharacterById(single.getGameId());
+                        ConsoleUI.finishLoading();
+                        if (full != null) displayFullCharacterInfo(full);
+                        else displayFullCharacterInfo(single);
+                    } else {
+                        promptForFullInfo(results);
+                    }
+                } catch (IOException e) {
+                    // If fetching full data fails, fallback to showing available results
+                    ConsoleUI.finishLoading();
+                    displaySearchResults(results, "Name Search Results (partial data)");
                 }
             } else {
                 ConsoleUI.displayError("No characters found with name: " + name);
                 ConsoleUI.displayInfo("Try searching with partial name or check spelling");
             }
             
+        } catch (IOException e) {
+            handleApiError(e);
+        }
+    }
+
+    private void searchByPopularity() {
+        ConsoleUI.displaySubHeader("SEARCH BY POPULARITY");
+
+        int topN = ConsoleUI.promptInt("How many top popular characters to show (1-20)");
+        if (topN < 1) topN = 5;
+        if (topN > 50) topN = 50;
+
+        try {
+            ConsoleUI.displayLoading("Fetching popular characters");
+            List<UmapyoiCharacter> popular = characterService.getPopularCharacters();
+            ConsoleUI.finishLoading();
+
+            if (popular != null && !popular.isEmpty()) {
+                displaySearchResults(popular.subList(0, Math.min(topN, popular.size())), "Top " + topN + " Popular Characters");
+                promptForFullInfo(popular.subList(0, Math.min(topN, popular.size())));
+            } else {
+                ConsoleUI.displayError("No popular characters available");
+            }
         } catch (IOException e) {
             handleApiError(e);
         }
@@ -257,27 +323,36 @@ public class ChesedSephirah implements Sephirah {
         
         if (rarity != null) {
             try {
-                ConsoleUI.displayLoading("Searching for " + rarity + " characters");
+                ConsoleUI.displayLoading("Searching for " + rarity + " characters across all 400+ characters...");
                 
-                // Get popular characters and filter by rarity
-                List<UmapyoiCharacter> allChars = characterService.getPopularCharacters();
-                List<UmapyoiCharacter> filtered = allChars.stream()
-                    .filter(char -> {
-                        Umamusume uma = char.toDomainModel();
-                        return uma.getRarity().name().equals(rarity);
-                    })
-                    .toList();
+                // Search all characters (1001-1400) and filter by rarity
+                List<UmapyoiCharacter> filtered = new ArrayList<>();
+                for (int characterId = 1001; characterId <= 1400; characterId++) {
+                    try {
+                        UmapyoiCharacter character = characterService.getCharacterById(characterId);
+                        Umamusume uma = character.toDomainModel();
+                        if (uma.getRarity().name().equals(rarity)) {
+                            filtered.add(character);
+                        }
+                        Thread.sleep(50);
+                    } catch (IOException e) {
+                        // Character might not exist, skip
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+                }
                 
                 ConsoleUI.finishLoading();
                 
                 if (!filtered.isEmpty()) {
-                    displaySearchResults(filtered, rarity + " Characters");
+                    displaySearchResults(filtered, rarity + " Characters (" + filtered.size() + " found)");
                 } else {
-                    ConsoleUI.displayError("No " + rarity + " characters found");
+                    ConsoleUI.displayError("No " + rarity + " characters found in full search");
                 }
                 
-            } catch (IOException e) {
-                handleApiError(e);
+            } catch (Exception e) {
+                handleApiError(new IOException(e));
             }
         }
     }
@@ -342,21 +417,28 @@ public class ChesedSephirah implements Sephirah {
         
         if (trackType != null) {
             try {
-                ConsoleUI.displayLoading("Searching characters for " + trackType + " tracks");
+                ConsoleUI.displayLoading("Fetching all characters for " + trackType + " search...");
                 
-                // This would use your TrackProficiency model
-                // For now, show popular characters
-                List<UmapyoiCharacter> characters = characterService.getPopularCharacters();
+                List<UmapyoiCharacter> characters = new ArrayList<>();
+                for (int characterId = 1001; characterId <= 1400; characterId++) {
+                    try {
+                        characters.add(characterService.getCharacterById(characterId));
+                        Thread.sleep(50);
+                    } catch (IOException e) {
+                        // Character might not exist, skip
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+                }
                 
                 ConsoleUI.finishLoading();
-                ConsoleUI.displayInfo("Track proficiency search coming soon!");
-                ConsoleUI.displayInfo("Showing popular characters instead:");
+                ConsoleUI.displayInfo("Showing all " + characters.size() + " characters (track proficiency filtering coming soon)");
                 
-                displaySearchResults(characters.subList(0, Math.min(5, characters.size())), 
-                                   "Popular Characters");
+                displaySearchResults(characters, "All Characters");
                 
-            } catch (IOException e) {
-                handleApiError(e);
+            } catch (Exception e) {
+                handleApiError(new IOException(e));
             }
         }
     }
@@ -492,35 +574,95 @@ public class ChesedSephirah implements Sephirah {
     private void displayFullCharacterInfo(UmapyoiCharacter character) {
         ConsoleUI.clearScreen();
         
-        // Convert to domain model for stats
-        Umamusume uma = character.toDomainModel();
+        // Convert to domain model and enrich with all available data
+        Umamusume uma = UmamusumeWikiScraper.enrichCharacterData(character);
         
-        // Build character card
-        StringBuilder card = new StringBuilder();
-        card.append("English: ").append(character.getNameEnglish()).append("\n");
-        card.append("Japanese: ").append(character.getNameJapanese()).append("\n");
-        card.append("API ID: ").append(character.getGameId()).append("\n");
-        card.append("Height: ").append(character.getHeight()).append("cm\n");
-        card.append("Birthday: ").append(character.getFormattedBirthday()).append("\n");
-        card.append("Grade: ").append(character.getGrade()).append("\n");
-        card.append("Residence: ").append(character.getResidence()).append("\n");
-        card.append("\n");
-        card.append("Rarity: ").append(uma.getRarity().getDisplayName()).append("\n");
-        card.append("Type: ").append(uma.getType().getDescription()).append("\n");
-        card.append("Total Stats: ").append(uma.getTotalStats()).append("\n");
-        card.append("\n");
-        card.append("Profile: ").append(truncate(character.getProfile(), 100)).append("\n");
-        card.append("Strengths: ").append(character.getStrengths()).append("\n");
-        card.append("Weaknesses: ").append(character.getWeaknesses()).append("\n");
+        // ===== IDENTIFICATION SECTION =====
+        ConsoleUI.displaySubHeader("IDENTIFICATION");
+        StringBuilder identification = new StringBuilder();
+        identification.append("Name: ").append(uma.getName()).append("\n");
+        identification.append("Japanese: ").append(uma.getJapaneseName()).append("\n");
+        identification.append("Game ID: ").append(uma.getId()).append("\n");
+        System.out.println(identification.toString());
         
-        ConsoleUI.displayCharacterCard(
-            character.getNameEnglish() + " - Full Character Info",
-            card.toString()
-        );
+        // ===== RARITY & TYPE SECTION (From GameTora) =====
+        ConsoleUI.displaySubHeader("GAME PROPERTIES (GameTora)");
+        StringBuilder gameProps = new StringBuilder();
+        gameProps.append("Rarity: ").append(uma.getRarity().getDisplayName()).append("\n");
+        gameProps.append("Type: ").append(uma.getType() != null ? uma.getType().getDescription() : "Unknown").append("\n");
+        gameProps.append("Aptitudes: ").append(uma.getAptitudes().toString()).append("\n");
+        System.out.println(gameProps.toString());
         
-        // Display stats in detail
-        ConsoleUI.displaySubHeader("DETAILED STATS");
-        System.out.println(uma.getStats().toString());
+        // ===== GAME STATS SECTION (From GameTora) =====
+        ConsoleUI.displaySubHeader("GAME STATS (GameTora)");
+        if (uma.getStats() != null) {
+            System.out.println(uma.getStats().toString());
+        }
+        
+        // ===== SKILLS SECTION (From GameTora) =====
+        if (!uma.getSkills().isEmpty()) {
+            ConsoleUI.displaySubHeader("SKILLS (GameTora)");
+            uma.getSkills().forEach(skill -> System.out.println("  • " + skill));
+        }
+        
+        // ===== API PROFILE DATA SECTION =====
+        ConsoleUI.displaySubHeader("PROFILE (Umapyoi API)");
+        StringBuilder profile = new StringBuilder();
+        profile.append("Slogan: ").append(truncate(uma.getSlogan(), 80)).append("\n");
+        profile.append("Profile: ").append(truncate(uma.getProfile(), 100)).append("\n");
+        profile.append("Strengths: ").append(uma.getStrengths()).append("\n");
+        profile.append("Weaknesses: ").append(uma.getWeaknesses()).append("\n");
+        System.out.println(profile.toString());
+        
+        // ===== PHYSICAL ATTRIBUTES SECTION =====
+        ConsoleUI.displaySubHeader("PHYSICAL ATTRIBUTES (API)");
+        StringBuilder physical = new StringBuilder();
+        physical.append("Height: ").append(uma.getHeight()).append("cm\n");
+        physical.append("Weight: ").append(uma.getWeight()).append("\n");
+        physical.append("Bust/Waist/Hips: ").append(uma.getBustSize()).append("/")
+               .append(uma.getWaistSize()).append("/").append(uma.getHipSize()).append("\n");
+        physical.append("Shoe Size: ").append(uma.getShoeSize()).append("\n");
+        System.out.println(physical.toString());
+        
+        // ===== BIRTHDAY & LOCATION SECTION =====
+        ConsoleUI.displaySubHeader("PERSONAL INFO (API)");
+        StringBuilder personal = new StringBuilder();
+        personal.append("Birthday: ").append(uma.getBirthMonth() > 0 ? uma.getBirthMonth() + "/" + uma.getBirthDay() : "Unknown").append("\n");
+        personal.append("Residence: ").append(uma.getResidence()).append("\n");
+        personal.append("Category: ").append(uma.getCategoryLabel()).append("\n");
+        personal.append("Grade: ").append(uma.getGrade()).append("\n");
+        System.out.println(personal.toString());
+        
+        // ===== CHARACTER LORE SECTION =====
+        if (uma.getEarsFact() != null || uma.getTailFact() != null || uma.getFamilyFact() != null) {
+            ConsoleUI.displaySubHeader("CHARACTER LORE (API)");
+            if (uma.getEarsFact() != null) System.out.println("Ears: " + uma.getEarsFact());
+            if (uma.getTailFact() != null) System.out.println("Tail: " + uma.getTailFact());
+            if (uma.getFamilyFact() != null) System.out.println("Family: " + uma.getFamilyFact());
+            System.out.println();
+        }
+        
+        // ===== BIOGRAPHY & RELATIONSHIPS SECTION (From GameTora) =====
+        if (uma.getBiography() != null && !uma.getBiography().isEmpty()) {
+            ConsoleUI.displaySubHeader("BIOGRAPHY (GameTora)");
+            System.out.println(truncate(uma.getBiography(), 200));
+            System.out.println();
+        }
+        
+        if (!uma.getRelationships().isEmpty()) {
+            ConsoleUI.displaySubHeader("RELATIONSHIPS (GameTora)");
+            uma.getRelationships().forEach(rel -> System.out.println("  • " + rel));
+            System.out.println();
+        }
+        
+        // ===== VISUAL ELEMENTS SECTION =====
+        ConsoleUI.displaySubHeader("VISUAL PROPERTIES (API)");
+        StringBuilder visual = new StringBuilder();
+        visual.append("Main Color: ").append(uma.getColorMain()).append("\n");
+        visual.append("Sub Color: ").append(uma.getColorSub()).append("\n");
+        visual.append("Has Thumbnail: ").append(uma.getThumbnailImageUrl() != null ? "Yes" : "No").append("\n");
+        visual.append("Has Detail Image: ").append(uma.getDetailImageUrl() != null ? "Yes" : "No").append("\n");
+        System.out.println(visual.toString());
         
         // Additional options
         ConsoleUI.displaySubHeader("ACTIONS");
@@ -564,6 +706,11 @@ public class ChesedSephirah implements Sephirah {
                 ConsoleUI.displayInfo("Favorite feature coming soon!");
                 break;
             case 5:
+                // View wiki enriched data
+                WikiDataDisplay.displayWikiEnrichedData(character);
+                ConsoleUI.pressEnterToContinue();
+                break;
+            case 6:
                 // Return to search
                 break;
             default:
@@ -574,23 +721,14 @@ public class ChesedSephirah implements Sephirah {
     // ==================== OTHER FUNCTIONALITY ====================
     
     private void demonstrateOOPConcepts() {
-        ConsoleUI.clearScreen();
-        ConsoleUI.displayHeader("OOP CONCEPTS DEMONSTRATION");
-        
-        DemoOOPConcepts demo = new DemoOOPConcepts();
-        demo.demonstrate();
-        
-        ConsoleUI.displaySubHeader("INTERACTIVE EXAMPLES");
-        
-        // Create different character types using factory
         UmaFactory factory = new UmaFactory();
         
         System.out.println("""
             Creating different character types using Factory Pattern:
             """);
         
-        AbstractUma speedUma = factory.createUma("SPEED");
-        AbstractUma staminaUma = factory.createUma("STAMINA");
+        AbstractUma speedUma = UmaFactory.createUma(UmaFactory.UmaType.SPEED, "Speed Type", "Speed Type Description", Umamusume.Rarity.SSR);
+        AbstractUma staminaUma = UmaFactory.createUma(UmaFactory.UmaType.STAMINA, "Stamina Type", "Stamina Type Description", Umamusume.Rarity.SSR);
         
         System.out.println("Speed Character: " + speedUma.getSpecialty());
         System.out.println("Stamina Character: " + staminaUma.getSpecialty());
@@ -657,7 +795,7 @@ public class ChesedSephirah implements Sephirah {
         // Run in a separate thread to show loading
         new Thread(() -> {
             try {
-                apiDemo.main(new String[]{});
+                ApiDataProcessingDemo.main(new String[]{});
             } catch (Exception e) {
                 ConsoleUI.displayError("API demo failed: " + e.getMessage());
             }
@@ -691,11 +829,13 @@ public class ChesedSephirah implements Sephirah {
                 // Demonstrate search
                 ConsoleUI.displaySubHeader("SEARCH DEMONSTRATION");
                 ConsoleUI.displayLoading("Searching for similar characters");
-                SearchResult results = searcher.searchByName("Week");
+                List<UmapyoiCharacter> results = characterService.getPopularCharacters().stream()
+                    .filter(c -> c.getNameEnglish() != null && c.getNameEnglish().contains("Week"))
+                    .collect(Collectors.toList());
                 ConsoleUI.finishLoading();
                 
-                if (results.isSuccess()) {
-                    System.out.println("Found " + results.getCount() + " matches");
+                if (!results.isEmpty()) {
+                    System.out.println("Found " + results.size() + " matches");
                 }
                 
                 // Demonstrate sorting
@@ -717,25 +857,36 @@ public class ChesedSephirah implements Sephirah {
     
     private void viewPopularCharacters() {
         try {
-            ConsoleUI.displayLoading("Fetching popular characters");
-            List<UmapyoiCharacter> characters = characterService.getPopularCharacters();
+            ConsoleUI.displayLoading("Fetching all characters (this may take a moment)...");
+            List<UmapyoiCharacter> characters = new ArrayList<>();
+            for (int characterId = 1001; characterId <= 1400; characterId++) {
+                try {
+                    characters.add(characterService.getCharacterById(characterId));
+                    Thread.sleep(50);
+                } catch (IOException e) {
+                    // Character might not exist, skip
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+            }
             ConsoleUI.finishLoading();
             
             if (!characters.isEmpty()) {
-                displaySearchResults(characters, "Popular Umamusume Characters");
+                displaySearchResults(characters, "All Umamusume Characters (" + characters.size() + " total)");
                 
-                // Sort and display
+                // Sort and display tallest
                 characters.sort(Comparator.comparingInt(UmapyoiCharacter::getHeight).reversed());
                 
                 ConsoleUI.displaySubHeader("TALLEST CHARACTERS");
-                for (int i = 0; i < Math.min(3, characters.size()); i++) {
+                for (int i = 0; i < Math.min(5, characters.size()); i++) {
                     UmapyoiCharacter c = characters.get(i);
                     System.out.printf("%d. %s - %dcm%n", i + 1, c.getNameEnglish(), c.getHeight());
                 }
             }
             
-        } catch (IOException e) {
-            handleApiError(e);
+        } catch (Exception e) {
+            handleApiError(new IOException(e));
         }
     }
     
@@ -749,14 +900,7 @@ public class ChesedSephirah implements Sephirah {
                 ConsoleUI.displaySubHeader("TODAY'S BIRTHDAYS");
                 
                 for (CharacterBirthday bday : birthdays) {
-                    System.out.printf("🎂 %s - %s%n", 
-                        bday.getNameEnglish(),
-                        bday.getFormattedBirthday()
-                    );
-                    
-                    if (bday.isBirthdayToday()) {
-                        System.out.println("   🎉 Birthday is TODAY!");
-                    }
+                    System.out.printf("🎂 %s%n", bday.toString());
                 }
             } else {
                 ConsoleUI.displayInfo("No birthdays today");
@@ -831,20 +975,15 @@ public class ChesedSephirah implements Sephirah {
     private void viewCharacterImages(int characterId) {
         try {
             ConsoleUI.displayLoading("Fetching character images");
-            CharacterImages images = characterService.getCharacterImages(characterId);
+            UmapyoiCharacter character = characterService.getCharacterById(characterId);
             ConsoleUI.finishLoading();
             
-            if (images != null && images.getImages() != null) {
+            if (character != null) {
                 ConsoleUI.displaySubHeader("CHARACTER IMAGES");
-                System.out.println("Total images: " + images.getImages().size());
-                
-                for (int i = 0; i < Math.min(3, images.getImages().size()); i++) {
-                    CharacterImages.Image img = images.getImages().get(i);
-                    System.out.printf("%d. %s - %s%n", 
-                        i + 1, img.getType(), img.getUrl());
-                }
+                ConsoleUI.displayInfo("Character: " + character.getNameEnglish());
+                ConsoleUI.displayInfo("Image feature coming soon");
             } else {
-                ConsoleUI.displayInfo("No images available for this character");
+                ConsoleUI.displayInfo("No character found with this ID");
             }
             
         } catch (IOException e) {

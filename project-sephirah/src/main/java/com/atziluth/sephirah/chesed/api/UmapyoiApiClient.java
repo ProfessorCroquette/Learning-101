@@ -1,6 +1,5 @@
 package com.atziluth.sephirah.chesed.api;
 
-import okhttp3.HttpUrl;
 import okhttp3.Request;
 import okhttp3.Response;
 import com.atziluth.sephirah.chesed.model.Umamusume;

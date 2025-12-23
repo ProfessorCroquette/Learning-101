@@ -28,10 +28,9 @@ public class ProjectSephirah {
     private static void displayWelcome() {
         ConsoleUI.displayHeader("PROJECT SEPHIRAH");
         System.out.println("""
-            A modular framework for learning Computer Science concepts
-            through practical implementation and real-world examples.
-            
-            Version: 1.0.0 | Chesed Module: OOP & Algorithms
+            A compact learning framework with interactive modules.
+
+            Version: 1.0.0
             """);
         ConsoleUI.pressEnterToContinue();
     }
@@ -53,13 +52,7 @@ public class ProjectSephirah {
     
     private static boolean displayMainMenu() {
         ConsoleUI.displayHeader("MAIN MENU");
-        System.out.println("""
-            Select a module to explore:
-            
-            Modules represent different computer science subjects.
-            Each module contains practical implementations,
-            demonstrations, and interactive tools.
-            """);
+        System.out.println("Select a module to explore. Use numbers to choose.");
         
         String[] options = {
             "Chesed - OOP & Algorithms",
@@ -108,7 +101,7 @@ public class ProjectSephirah {
             📚 LEARNING APPROACH
             • Each module (Sephirah) focuses on one subject
             • Theory is connected directly to implementation
-            • Real-world examples (Umamusume API) make concepts tangible
+            • Real-world examples (Umamusume API + GameTora Wiki) make concepts tangible
             • Progressive difficulty with clear learning paths
             
             🏗️ ARCHITECTURE
@@ -116,6 +109,12 @@ public class ProjectSephirah {
             • Clean separation of concerns
             • Professional software engineering patterns
             • Comprehensive error handling and logging
+            
+            📊 DATA INTEGRATION
+            • Umapyoi.net API: Character profiles, physical attributes, lore
+            • GameTora Wiki: Game stats, aptitudes, skills, rarity
+            • Unified Domain Model: Complete character information
+            • Full enrichment pipeline: API → Wiki Scraping → Consolidated Model
             
             🔮 ROADMAP
             • Chesed  ✓ OOP & Algorithms (Current)

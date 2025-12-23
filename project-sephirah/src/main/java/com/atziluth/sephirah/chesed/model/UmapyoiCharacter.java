@@ -334,6 +334,60 @@ public class UmapyoiCharacter {
             nameEnglish, nameJapanese, height, getFormattedBirthday(), grade);
     }
     
+    /**
+     * Enriches the API character data with additional fields from Umamusume (GameTora wiki data).
+     * Copies all API data into the domain model and preserves wiki-enriched data.
+     * @param enrichedModel The Umamusume model containing GameTora wiki data and initial domain mapping.
+     * @return Fully enriched Umamusume with all API and wiki data.
+     */
+    public Umamusume enrichWithApiData(Umamusume enrichedModel) {
+        if (enrichedModel == null) {
+            enrichedModel = new Umamusume();
+        }
+        
+        // Set identification (may overwrite wiki values)
+        enrichedModel.setId(this.gameId);
+        enrichedModel.setName(this.nameEnglish);
+        enrichedModel.setJapaneseName(this.nameJapanese);
+        
+        // ===== API PROFILE DATA =====
+        enrichedModel.setProfile(this.profile);
+        enrichedModel.setSlogan(this.slogan);
+        enrichedModel.setStrengths(this.strengths);
+        enrichedModel.setWeaknesses(this.weaknesses);
+        
+        // ===== PHYSICAL ATTRIBUTES =====
+        enrichedModel.setHeight(this.height);
+        enrichedModel.setWeight(this.weight);
+        enrichedModel.setBustSize(this.bustSize);
+        enrichedModel.setWaistSize(this.waistSize);
+        enrichedModel.setHipSize(this.hipSize);
+        enrichedModel.setShoeSize(this.shoeSize);
+        
+        // ===== BIRTHDAY & LOCATION =====
+        enrichedModel.setBirthMonth(this.birthMonth);
+        enrichedModel.setBirthDay(this.birthDay);
+        enrichedModel.setResidence(this.residence);
+        
+        // ===== CHARACTER LORE =====
+        enrichedModel.setEarsFact(this.earsFact);
+        enrichedModel.setTailFact(this.tailFact);
+        enrichedModel.setFamilyFact(this.familyFact);
+        
+        // ===== VISUAL ELEMENTS =====
+        enrichedModel.setColorMain(this.colorMain);
+        enrichedModel.setColorSub(this.colorSub);
+        enrichedModel.setThumbnailImageUrl(this.thumbnailImageUrl);
+        enrichedModel.setDetailImageUrl(this.detailImagePcUrl);
+        enrichedModel.setSnsIconUrl(this.snsIconUrl);
+        
+        // ===== GAME METADATA =====
+        enrichedModel.setCategoryLabel(this.categoryLabelEnglish);
+        enrichedModel.setGrade(this.grade);
+        
+        return enrichedModel;
+    }
+    
     // ===== OVERRIDDEN METHODS =====
     
     @Override

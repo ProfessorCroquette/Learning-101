@@ -11,12 +11,10 @@ import java.util.stream.Collectors;
  * Central manager for character operations
  */
 public class UmapyoiCharacterManager {
-    private final UmapyoiApiClient apiClient;
     private final CharacterService characterService;
     private final Map<Integer, UmapyoiCharacter> characterCache;
     
-    public UmapyoiCharacterManager(UmapyoiApiClient apiClient, CharacterService characterService) {
-        this.apiClient = apiClient;
+    public UmapyoiCharacterManager(CharacterService characterService) {
         this.characterService = characterService;
         this.characterCache = new HashMap<>();
     }
@@ -29,28 +27,28 @@ public class UmapyoiCharacterManager {
         List<UmapyoiCharacter> characters = characterService.getPopularCharacters();
         
         return characters.stream()
-            .filter(char -> {
+            .filter(c -> {
                 // Filter by name
                 if (name != null && !name.isEmpty()) {
-                    if (!char.getNameEnglish().toLowerCase().contains(name.toLowerCase()) &&
-                        !char.getNameJapanese().contains(name)) {
+                    if (!c.getNameEnglish().toLowerCase().contains(name.toLowerCase()) &&
+                        !c.getNameJapanese().contains(name)) {
                         return false;
                     }
                 }
                 
                 // Filter by rarity
                 if (rarity != null && !rarity.isEmpty()) {
-                    Umamusume uma = char.toDomainModel();
+                    Umamusume uma = c.toDomainModel();
                     if (!uma.getRarity().name().equals(rarity.toUpperCase())) {
                         return false;
                     }
                 }
                 
                 // Filter by height
-                if (minHeight != null && char.getHeight() < minHeight) {
+                if (minHeight != null && c.getHeight() < minHeight) {
                     return false;
                 }
-                if (maxHeight != null && char.getHeight() > maxHeight) {
+                if (maxHeight != null && c.getHeight() > maxHeight) {
                     return false;
                 }
                 
@@ -75,6 +73,9 @@ public class UmapyoiCharacterManager {
                     int stats2 = c2.toDomainModel().getTotalStats();
                     return Integer.compare(stats2, stats1); // Descending
                 });
+                break;
+            default:
+                // Keep original order
                 break;
         }
         
