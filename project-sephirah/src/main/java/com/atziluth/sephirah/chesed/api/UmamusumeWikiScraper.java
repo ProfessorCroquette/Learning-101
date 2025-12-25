@@ -30,21 +30,47 @@ public class UmamusumeWikiScraper {
     private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
     
     /**
-     * Scrape GameTora for character stats and build domain model
+     * Scrape GameTora using Character ID (Preferred Method)
+     * Automatically handles base IDs (e.g., 1052) by appending '01' to reach the specific card page.
+     * @param characterId The game ID of the character
+     * @return Umamusume domain model with wiki-enriched data
+     */
+    public static Umamusume scrapeCharacterStats(int characterId) {
+        // Fix for GameTora: Base IDs (4 digits) often point to a profile page without stats.
+        // We append "01" to target the default playable card (6 digits).
+        String urlId = String.valueOf(characterId);
+        if (urlId.length() == 4) {
+            urlId += "01";
+            logger.debug("Adjusted base ID {} to {} for GameTora stats lookup", characterId, urlId);
+        }
+
+        String wikiUrl = WIKI_BASE_URL + "/characters/" + urlId;
+        return scrapeFromUrl(wikiUrl, "ID: " + characterId);
+    }
+
+    /**
+     * Scrape GameTora using Character Name (Fallback Method)
+     * @param characterName The English name of the character
      * @return Umamusume domain model with wiki-enriched data
      */
     public static Umamusume scrapeCharacterStats(String characterName) {
+        String wikiUrl = buildWikiUrl(characterName);
+        return scrapeFromUrl(wikiUrl, "Name: " + characterName);
+    }
+
+    /**
+     * Internal method to perform the actual scraping logic given a URL
+     */
+    private static Umamusume scrapeFromUrl(String wikiUrl, String identifier) {
         // Create base model
         Umamusume character = new Umamusume();
-        character.setName(characterName);
+        // Identifier is just for logging/debugging context here
         
         // Container for extracted data
         Map<String, Object> stats = new HashMap<>();
         
         try {
-            // Build GameTora URL from character name
-            String wikiUrl = buildWikiUrl(characterName);
-            logger.info("Scraping GameTora for {}: {}", characterName, wikiUrl);
+            logger.info("Scraping GameTora for {}: {}", identifier, wikiUrl);
             
             // Fetch and parse HTML
             Document doc = Jsoup.connect(wikiUrl)
@@ -60,19 +86,20 @@ public class UmamusumeWikiScraper {
             extractRelationships(doc, stats);  // Related characters
             
             // Build domain model from extracted data
-            character = buildUmamusumeModel(characterName, stats);
+            // Note: If scraping by ID, name might be null initially, it will be filled by enricher later
+            character = buildUmamusumeModel(stats);
             
             if (stats.size() >= 3) {
                 logger.info("Successfully scraped {} fields from GameTora for {}", 
-                    stats.size(), characterName);
+                    stats.size(), identifier);
             } else {
-                logger.warn("Limited data extracted from GameTora for {}", characterName);
+                logger.warn("Limited data extracted from GameTora for {}", identifier);
             }
             
         } catch (IOException e) {
-            logger.warn("Failed to scrape GameTora for {}: {}", characterName, e.getMessage());
+            logger.warn("Failed to scrape GameTora for {}: {}", identifier, e.getMessage());
         } catch (Exception e) {
-            logger.warn("Unexpected error scraping GameTora for {}: {}", characterName, e.getMessage());
+            logger.warn("Unexpected error scraping GameTora for {}: {}", identifier, e.getMessage());
         }
         
         return character;
@@ -81,9 +108,9 @@ public class UmamusumeWikiScraper {
     /**
      * Build Umamusume domain model from extracted GameTora data
      */
-    private static Umamusume buildUmamusumeModel(String characterName, Map<String, Object> stats) {
+    private static Umamusume buildUmamusumeModel(Map<String, Object> stats) {
         Umamusume character = new Umamusume();
-        character.setName(characterName);
+        // Name is handled by the caller (enrichCharacterData) merging this object
         
         // Build and populate stats
         Umamusume.Stats modelStats = new Umamusume.Stats();
@@ -146,9 +173,6 @@ public class UmamusumeWikiScraper {
                 logger.debug("Failed to set track proficiency: {}", e.getMessage());
             }
         }
-        
-        logger.debug("Built Umamusume model for {} with rarity {} and type {}", 
-            characterName, character.getRarity(), character.getType());
         
         return character;
     }
@@ -365,7 +389,7 @@ public class UmamusumeWikiScraper {
                                     stats.put("guts", value);
                                     logger.debug("Extracted Guts: {}", value);
                                 } else if (imgAlt.contains("Intelligence") || imgAlt.contains("Wit") || 
-                                           imgAlt.contains("intelligence") || imgAlt.contains("wit")) {
+                                             imgAlt.contains("intelligence") || imgAlt.contains("wit")) {
                                     stats.put("intelligence", value);
                                     logger.debug("Extracted Intelligence: {}", value);
                                 }
@@ -646,18 +670,25 @@ public class UmamusumeWikiScraper {
         }
         
         try {
-            String characterName = apiCharacter.getNameEnglish();
-            if (characterName == null || characterName.isEmpty()) {
-                return new Umamusume();
-            }
+            Umamusume wikiEnrichedModel;
             
-            // Step 1: Scrape GameTora for wiki data (stats, aptitudes, skills, biography)
-            Umamusume wikiEnrichedModel = scrapeCharacterStats(characterName);
+            // Step 1: Try to scrape using ID first (Better for GameTora specific pages)
+            // GameTora uses 6-digit IDs for cards (105201) vs 4-digit base IDs (1052)
+            if (apiCharacter.getGameId() > 0) {
+                wikiEnrichedModel = scrapeCharacterStats(apiCharacter.getGameId());
+            } else {
+                // Fallback to name-based scraping if ID is missing
+                String characterName = apiCharacter.getNameEnglish();
+                if (characterName == null || characterName.isEmpty()) {
+                    return new Umamusume();
+                }
+                wikiEnrichedModel = scrapeCharacterStats(characterName);
+            }
             
             // Step 2: Enrich with API data (profile, physical attributes, lore, visuals)
             Umamusume fullyEnrichedModel = apiCharacter.enrichWithApiData(wikiEnrichedModel);
             
-            logger.info("Fully enriched {} with GameTora wiki and Umapyoi API data", characterName);
+            logger.info("Fully enriched {} with GameTora wiki and Umapyoi API data", apiCharacter.getNameEnglish());
             return fullyEnrichedModel;
             
         } catch (Exception e) {
